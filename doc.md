@@ -32,7 +32,11 @@ lista zawiera obiekty:
 
 ## /channels
 Parametry: 
-- **guild_id** - id serwera którego kanały mają zostać zwrócone 
+- Wymagane
+	- **guild_id** - id serwera którego kanały mają zostać zwrócone 
+- opcjonalne
+	- **only_text** - tylko kanały tekstowe (wartość 0 lub 1) domyślne 0
+	- **only_can_write** - tylko kanały tekstowe do których ma uprawnienia SEND_MESSAGES i EMBED_LINKS (wartość 0 lub 1) domyślnie
 
 Zwraca listę kanałów na podanym serverze 
 

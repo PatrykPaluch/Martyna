@@ -96,7 +96,12 @@ webApp.get("/martyna/api/guilds", (req, res)=>{
 
 /**
  * Zwraca listę kanałów na serverze <br>
- * Param guild_id
+ * Parametry:
+ * 	guild_id
+ * opcjonalne:
+ * 	onlyText - 0/1 - tylko kanały tekstowe
+ *  onlyCanWrite - 0/1 - tylko kanały do których ma uprawnienia SEND_MESSAGES i EMBED_LINKS
+ * 
  * return
  * lista obiektow:
  * 	{
@@ -106,8 +111,10 @@ webApp.get("/martyna/api/guilds", (req, res)=>{
  *  }
  */
 webApp.get("/martyna/api/channels", (req,res)=>{
-	console.log(req.query);
 	let guild_id = req.query.guild_id;
+	let onlyText = req.query.only_text;
+	let onlyCanWrite = req.query.only_can_write;
+
 	if(guild_id==undefined){
 		res.status(400);
 		res.write("guild_id is undefined");
@@ -117,9 +124,19 @@ webApp.get("/martyna/api/channels", (req,res)=>{
 	let channels=discordClient.guilds.get(guild_id).channels;
 	let channelList = [];
 	channels.forEach((channel)=>{
-		channelList.push(
-			{id: channel.id, name: channel.name, type: channel.type}
-		);
+		if( onlyCanWrite ){
+			var perms = channel.permissionsFor(discordClient.user);
+			if( channel.type=="text" && perms.has("SEND_MESSAGES") && perms.has("EMBED_LINKS") ){
+				channelList.push(
+					{id: channel.id, name: channel.name, type: channel.type}
+				);
+			}
+		}
+		else if(!onlyText || channel.type=="text"){
+			channelList.push(
+				{id: channel.id, name: channel.name, type: channel.type}
+			);
+		}
 	});
 
 	res.write(JSON.stringify(channelList));
@@ -161,6 +178,7 @@ webApp.post("/martyna/api/news", (req, res)=>{
 	let author_icon = req.body.author_icon;
 	let link = req.body.link;
 	let content = req.body.content;
+
 	//optional
 	let image = req.body.image;
 	let color = req.body.color;
