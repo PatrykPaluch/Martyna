@@ -7,22 +7,55 @@ const client = new Discord.Client();
 
 //consts
 const name = "Martyna";
-const prefixes = ["M!", "Martyna", "Martyno"];
+const prefix = "M!";
+const humanPrefixes =  ["Martyna", "Martyno", "@Martyna#3857"];
 
 /**
- * Sprawdza czy tekst zawiera prefix
- * @param {string} text 
+ * Sprawdza czy tekst zawiera prefix ludzki np. "Martyno"
+ * @param {string} text tekst do sprawdzenia
  */
-function hasPrefix( text ){
-
+function hasHumanPrefix( text ){
+	for(var i = 0 ; i < humanPrefixes.length ; ++i )
+		if(text.startsWith(humanPrefixes[i]+" ")) return true;
+	
+	return false;
 }
 
+
+
+client.commands = {}
+
+fs.readdir("./commands/", (err, files)=>{
+	if(err) return console.error(err);
+	files.forEach(file=>{
+		if(!file.endsWith(".js")) return;
+		let props = require('./commands/'+file);
+		let commandName = file.split(".")[0];
+		client.commands[commandName] =  props;
+	});
+});
+
 client.on('ready', ()=>{
-	console.log("Logged in as $(client.user.tag)");
+	console.log('Logged in as '+client.user.tag);
 })
 
-client.on('message', (client, message)=>{
-	console.log(message.author.bot);
+function proccesHumanCommand(message){
+	
+}
+client.on('message', (message)=>{
+	if(message.author.bot) return;
+	if(message.content.indexOf(prefix)!==0){
+		if(hasHumanPrefix(message.content)){
+			proccesHumanCommand(message);
+		}
+	}else{
+		const args = message.content.slice(prefix.length).trim().split(/ +/g);
+		const command = args.shift().toLowerCase();
+
+		const cmd = client.commands[command];
+		if(!cmd) return;
+		cmd.run(client, message, args);
+	}
 });
 
 
