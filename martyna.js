@@ -14,7 +14,7 @@ const prefix = "M!";
 const humanPrefixes =  ["Martyna", "Martyno", "@Martyna#3857"];
 const footerMessage = "Zapraszamy na cubeform.com";
 const footerImg = "http://example.com/img.png";
-
+const ipWhiteList = ["localhost", "127.0.0.1"];
 
 //======================= DISCORD BOT =============== 
 /**
@@ -28,8 +28,6 @@ function hasHumanPrefix( text ){
 	return false;
 }
 
-
-
 discordClient.commands = {}
 
 fs.readdir("./commands/", (err, files)=>{
@@ -42,9 +40,7 @@ fs.readdir("./commands/", (err, files)=>{
 	});
 });
 
-discordClient.on('ready', ()=>{
-	console.log('Logged in as '+discordClient.user.tag);
-})
+//On ready in start seccion
 
 function proccesHumanCommand(message){
 	
@@ -70,11 +66,18 @@ discordClient.on('message', (message)=>{
 
 webApp.use(express.json());
 webApp.use(express.urlencoded({ extended: true }));
-//use
-// webApp.on("/martyna/api/*", (req,res,next)=>{
-// 	console.log("Request from: " + req.host);
-// 	next();
-// });
+
+webApp.use("/martyna/api/", (req,res,next)=>{
+	for(var i = 0 ; i < ipWhiteList.length ; ++i){
+		 if(ipWhiteList[i]==req.hostname){
+			next(); 
+			return;
+		 }
+	}
+	console.log("Unauthorized request from: " + req.hostname);
+	res.sendStatus(403);
+	
+});
 /**
  * Zwraca listę serwerów 
  * return
@@ -178,7 +181,12 @@ webApp.post("/martyna/api/news", (req, res)=>{
 	let author_icon = req.body.author_icon;
 	let link = req.body.link;
 	let content = req.body.content;
-
+	if(!(guild_id&&channel_id&&title&&data&&author&&author_icon&&link&&content)){
+		res.write("guild_id, channel_id, title, data, author, author_icon, link, content. Some of thete are missing");
+		res.status(400);
+		res.send();
+		return;
+	}
 	//optional
 	let image = req.body.image;
 	let color = req.body.color;
@@ -230,14 +238,19 @@ webApp.get("/martyna/api/teapot", (req, res)=>{ res.sendStatus(418);})
 
 //==================== START =======================
 
+
+discordClient.on('ready', ()=>{
+	console.log('Logged in as '+discordClient.user.tag);
+	webApp.listen(8001, ()=>{
+		console.log("HTTP server start on 8001");
+	});
+})
+
 //Start
 fs.readFile('token','utf8',(err,data)=>{
 	if(err)
 		console.error("ERROR: Token not found. Add file 'token'");
 	else{
 		discordClient.login(data);
-		webApp.listen(8001, ()=>{
-			console.log("HTTP server start on 8001");
-		});
 	}
 });

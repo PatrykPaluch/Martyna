@@ -82,3 +82,6 @@ Zwraca:
 - Błąd
 	- Kod odpowiedzi: 409
 	- Treść: informacja o napotkanym błędzie
+- Błąd 
+	- Kod odpowiedzi: 499
+	- Treść: informacja o brakujących zmiennych
