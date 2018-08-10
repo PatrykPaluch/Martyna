@@ -70,6 +70,9 @@ webApp.use(express.urlencoded({ extended: true }));
 webApp.use("/martyna/api/", (req,res,next)=>{
 	for(var i = 0 ; i < ipWhiteList.length ; ++i){
 		 if(ipWhiteList[i]==req.hostname){
+			//For tests
+			res.setHeader("Access-Control-Allow-Origin", "*");
+			res.setHeader("Access-Control-Allow-Headers", "*");
 			next(); 
 			return;
 		 }
@@ -93,6 +96,8 @@ webApp.get("/martyna/api/guilds", (req, res)=>{
 	guilds.forEach((guild)=>{
 		guildList.push( {id: guild.id, name: guild.name});
 	});
+
+	res.setHeader("Content-Type", "application/json");
 	res.write( JSON.stringify(guildList) );
 	res.send();
 });
@@ -141,7 +146,7 @@ webApp.get("/martyna/api/channels", (req,res)=>{
 			);
 		}
 	});
-
+	res.setHeader("Content-Type", "application/json");
 	res.write(JSON.stringify(channelList));
 	res.send();
 });

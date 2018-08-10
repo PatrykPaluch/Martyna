@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Page Title</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style type="text/css">
+		body {
+			margin: 0;
+			padding: 30px;
+			background-color: #3e3e3e;
+			color: #e3e3e3;
+			font-family: sans-serif;
+		}
+	</style>
+</head>
+<body>
+	Autor: <br>
+	Nazwa: <input type="text" id="autor" value="JavaScript"> <br>
+	URL obrazka: <input type="url" id="autor-img-url" value="https://jaki-jezyk-programowania.pl/img/javascript.png"> <br>
+	<img id="autor-img-img" src="#" width="128", height="128">
+
+	<hr>
+	Post: <br>
+	Tytul: <input type="text" id="tytul" value="Test"> <br>
+	Tresc: <input type="text" id="tresc" value="Test wysyłania z poziomu javascript"> <br>
+	URL obrazka: <input type="url" id="img-url" value="https://cdn-images-1.medium.com/max/1200/1*H-25KB7EbSHjv70HXrdl6w.png"> <br>
+	<img id="img-img" src="#" height="200px"> <br><br>
+
+
+	<select id="channel">
+
+	</select>
+	<button onclick="send()">Gotowe</button>
+	<script>
+		var serverID = "417340854412247040";
+		loadChannels();
+		function loadChannels(){
+			var xhttp = new XMLHttpRequest();
+			xhttp.open("GET", "http://localhost:8001/martyna/api/channels?only_can_write=1&guild_id="+serverID, false);
+			xhttp.send(null);
+			if(xhttp.status==200){
+				var channels = JSON.parse(xhttp.responseText);
+				var select = document.getElementById("channel");
+				console.log(channels);
+				channels.forEach(function(channel){
+					var chItem = document.createElement("option");
+					chItem.setAttribute("value", channel.id);
+					chItem.innerText = channel.name;
+					select.appendChild(chItem);
+				});
+			}else {
+				document.write("Błąd komunikacji");
+			}
+		}
+
+		var imgInput = document.getElementById("img-url");
+		var autorImgInput = document.getElementById("autor-img-url");
+		var img = document.getElementById("img-img");
+		var autorImg = document.getElementById("autor-img-img");
+
+		var autorInput = document.getElementById("autor");
+
+		var tytulInput = document.getElementById("tytul");
+		var trescInput = document.getElementById("tresc");
+		var channelInput = document.getElementById("channel");
+
+		imgInput.addEventListener("change", function(){img.setAttribute("src", imgInput.value);});
+		autorImgInput.addEventListener("change", function(){autorImg.setAttribute("src", autorImgInput.value);});
+		imgInput.dispatchEvent(new Event("change"));
+		autorImgInput.dispatchEvent(new Event("change"));
+
+		function send(){
+			var out = {
+				guild_id: serverID,
+				channel_id: channelInput.value,
+				image:imgInput.value,
+				author_icon: autorImgInput.value,
+				author: autorInput.value,
+				title: tytulInput.value,
+				content: trescInput.value,
+				data: new Date().getTime(),
+				link: "http://localhost:8002/",
+			};
+			
+			document.write("Wysyłanie...");
+			var xhttp = new XMLHttpRequest();
+			xhttp.open("POST", "http://localhost:8001/martyna/api/news", false);
+			xhttp.setRequestHeader("Content-Type", "application/json");
+			xhttp.send(JSON.stringify(out));
+			if(xhttp.status == 200){
+				document.write("OK");
+			}else {
+				document.write("ERROR");
+			}
+		}
+	</script>
+</body>
+</html>
+
