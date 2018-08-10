@@ -34,27 +34,35 @@
 	</select>
 	<button onclick="send()">Gotowe</button>
 	<script>
+		//Server id
 		var serverID = "417340854412247040";
+
+		//Load channels to <select>
 		loadChannels();
 		function loadChannels(){
+			//Send XMLHttp request
 			var xhttp = new XMLHttpRequest();
 			xhttp.open("GET", "http://localhost:8001/martyna/api/channels?only_can_write=1&guild_id="+serverID, false);
 			xhttp.send(null);
 			if(xhttp.status==200){
+				//Decode JSON from response text
 				var channels = JSON.parse(xhttp.responseText);
 				var select = document.getElementById("channel");
-				console.log(channels);
+				
+				//Channel object: {id, name, type}
 				channels.forEach(function(channel){
 					var chItem = document.createElement("option");
 					chItem.setAttribute("value", channel.id);
 					chItem.innerText = channel.name;
 					select.appendChild(chItem);
 				});
+				
 			}else {
 				document.write("Błąd komunikacji");
 			}
 		}
 
+		//Var
 		var imgInput = document.getElementById("img-url");
 		var autorImgInput = document.getElementById("autor-img-url");
 		var img = document.getElementById("img-img");
@@ -66,29 +74,34 @@
 		var trescInput = document.getElementById("tresc");
 		var channelInput = document.getElementById("channel");
 
+		//some stuff
 		imgInput.addEventListener("change", function(){img.setAttribute("src", imgInput.value);});
 		autorImgInput.addEventListener("change", function(){autorImg.setAttribute("src", autorImgInput.value);});
 		imgInput.dispatchEvent(new Event("change"));
 		autorImgInput.dispatchEvent(new Event("change"));
 
+		//Magic start here
 		function send(){
+			//Create JSON
 			var out = {
-				guild_id: serverID,
-				channel_id: channelInput.value,
-				image:imgInput.value,
-				author_icon: autorImgInput.value,
-				author: autorInput.value,
-				title: tytulInput.value,
-				content: trescInput.value,
-				data: new Date().getTime(),
-				link: "http://localhost:8002/",
+				guild_id: 		serverID,
+				channel_id:		channelInput.value,
+				image:			imgInput.value,
+				author_icon: 	autorImgInput.value,
+				author: 		autorInput.value,
+				title: 			tytulInput.value,
+				content: 		trescInput.value,
+				data: 			new Date().getTime(),
+				link: 			"http://localhost:8002/",
 			};
 			
 			document.write("Wysyłanie...");
+			//Send XMLHttp request
 			var xhttp = new XMLHttpRequest();
 			xhttp.open("POST", "http://localhost:8001/martyna/api/news", false);
 			xhttp.setRequestHeader("Content-Type", "application/json");
-			xhttp.send(JSON.stringify(out));
+			//Send JSON as string
+			xhttp.send( JSON.stringify(out) );
 			if(xhttp.status == 200){
 				document.write("OK");
 			}else {

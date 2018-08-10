@@ -70,16 +70,15 @@ webApp.use(express.urlencoded({ extended: true }));
 webApp.use("/martyna/api/", (req,res,next)=>{
 	for(var i = 0 ; i < ipWhiteList.length ; ++i){
 		 if(ipWhiteList[i]==req.hostname){
-			//For tests
-			res.setHeader("Access-Control-Allow-Origin", "*");
-			res.setHeader("Access-Control-Allow-Headers", "*");
+			res.setHeader("Access-Control-Allow-Origin", "*"); ///Only white list, any port
+			res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+			res.setHeader("Access-Control-Allow-Headers", "X-Requested-With,content-type");
 			next(); 
 			return;
 		 }
 	}
 	console.log("Unauthorized request from: " + req.hostname);
 	res.sendStatus(403);
-	
 });
 /**
  * Zwraca listę serwerów 
