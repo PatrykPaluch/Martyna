@@ -2,8 +2,10 @@
 - [GET](#get)
 	- [/guilds](#guilds)
 	- [/channels](#channels)
+	- [/news](#news)
 - [POST](#post)
 	- [/news](#news)
+	- [/news/remove](#newsremove)
 
 # Wprowadzenie
 Dostęp do API odbywa się przez HTTP pod adresem **domena:port/martyna/api/**.
@@ -47,6 +49,29 @@ lista zawiera obiekty:
 - **name** - nazwa kanału
 - **type** - typ kanału (dm/group/text/voice/category)
 
+## /news 
+Parametry:
+- Opcjonalne
+	- **guild_id** - id servera
+
+Zwraca listę nowinek
+
+Jeżeli podano guild_id struktura wygląda tak:
+```json
+[
+	{title, date, link}, ...
+]
+```
+Jeżeli nie podano guild_id struktura wygląda tak:
+```json
+{
+	guild_id: [
+		{title, date, link}, ...
+	], ...
+}
+```
+
+
 # POST
 Parametry są przekazywane z użyciem JSON w treści zapytania
 
@@ -59,7 +84,7 @@ Parametry:
 	- **channel_id** - id kanału 
 	- **title** - max 256 znaków
 	- **content** - max 2048 znaków
-	- **data** - czas w ms lub zapis daty JavaScript
+	- **date** - czas w ms lub zapis daty JavaScript
 	- **author** - nazwa autora
 	- **author_icon** - link to ikony autora
 	- **link** - link do postu 
@@ -83,5 +108,16 @@ Zwraca:
 	- Kod odpowiedzi: 409
 	- Treść: informacja o napotkanym błędzie
 - Błąd 
-	- Kod odpowiedzi: 499
+	- Kod odpowiedzi: 400
 	- Treść: informacja o brakujących zmiennych
+
+## /news/remove
+Usuwa nowinki
+
+Parametry:
+- Wymagane
+	- guild_id
+
+
+Zwraca:
+	ilość usuniętych nowosci

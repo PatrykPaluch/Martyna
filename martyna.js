@@ -11,10 +11,48 @@ const discordClient = new Discord.Client();
 //consts
 const name = "Martyna";
 const prefix = "M!";
-const humanPrefixes =  ["Martyna", "Martyno", "@Martyna#3857"];
+const humanPrefixes =  ["Martyna", "Martyno"];
 const footerMessage = "Zapraszamy na cubeform.com";
 const footerImg = "http://example.com/img.png";
 const ipWhiteList = ["localhost", "127.0.0.1"];
+
+//vars
+discordClient.maxNewsCount = 10;
+discordClient.news = {}
+
+//===================== FUNCTIONS ===================
+/**
+ * 
+ * @param {string} text 
+ * @returns {string} text bez polskich ogonków
+ */
+function replacePolishDiacritics(text){
+	var from = ['ą','ć','ę','ł','ń','ó','ś','ź','ż'];
+	var to   = ['a','c','e','l','n','o','s','z','z'];
+	for(var i = 0 ; i < from.length ; ++i){
+		text = text.replace(from[i], to[i]);
+	}   
+	return text;
+}
+
+/**
+ * 
+ * @param {string} guild_id 
+ * @param {string} title 
+ * @param {string} link 
+ * @param {Date | string | number} date 
+ */
+function addNews(guild_id, title, link, date){
+	let obj =  {title: title, date: date, link: link};
+	if(discordClient.news[guild_id])
+		discordClient.news[guild_id].push(obj);
+	else {
+		discordClient.news[guild_id] = [ obj ];
+	}
+	if(discordClient.news[guild_id].length>discordClient.maxNewsCount){
+		discordClient.news[guild_id].splice(0,1);//remove oldest
+	}
+}
 
 //======================= DISCORD BOT =============== 
 /**
@@ -28,6 +66,7 @@ function hasHumanPrefix( text ){
 	return false;
 }
 
+//======= INIT COMMANDS
 discordClient.commands = {}
 
 fs.readdir("./commands/", (err, files)=>{
@@ -40,11 +79,26 @@ fs.readdir("./commands/", (err, files)=>{
 	});
 });
 
-//On ready in start seccion
-
+/**
+ * @param {Discord.Message} message 
+ */
 function proccesHumanCommand(message){
-	
+	var text = replacePolishDiacritics(message.content.toLowerCase());
+	//Nowosci
+	var cmd =
+			(
+			(text.indexOf("co")!==-1 || text.indexOf("cos")!==-1)&&
+				(text.indexOf("nowego")!==-1)
+			|| (text.indexOf("ostatnio")!==-1)
+			|| (text.indexOf("slychac")!==-1)
+			)
+		|| (text.indexOf("sa")!==-1 && (text.indexOf("nowosci")!==-1||text.indexOf("nowinki")!==-1) );
+	if(cmd){
+		discordClient.commands["nowosci"].run(discordClient,message);
+		return;
+	}
 }
+
 discordClient.on('message', (message)=>{
 	if(message.author.bot) return;
 	if(message.content.indexOf(prefix)!==0){
@@ -150,6 +204,50 @@ webApp.get("/martyna/api/channels", (req,res)=>{
 	res.send();
 });
 /**
+ * Zwraca listę nowinek
+ * Parametry (opcjionalne):
+ * 	guild_id - id servera
+ */
+webApp.get("/martyna/api/news", (req, res)=>{
+	var guild = req.query.guild_id;
+	res.setHeader("Content-Type", "application/json");
+	if(guild){
+		if(discordClient.news[guild])
+			res.write( JSON.stringify(discordClient.news[guild]) );
+		else 
+			res.write( JSON.stringify([]) );
+	}else {
+		res.write( JSON.stringify(discordClient.news) );
+	}
+	res.send();
+});
+
+/**
+ * Usuwa nowinki
+ * Parametry:
+ * 	guild_id
+ */
+webApp.post("/martyna/api/news/remove", (req,res)=>{
+	var guild = req.body.guild_id;
+	if(guild==undefined){
+		res.status(400);
+		res.write("Missing guild_id");
+		res.send();
+		return;
+	}
+	var news = discordClient.news[guild];
+	var len = news.length;
+	if(news && len>0){
+		discordClient.news[guild] = [];
+		res.write(""+len);
+		res.send()
+		return;
+	}
+	res.write("0");
+	res.send();
+});
+
+/**
 	Wstawia nowinkę na podany serwer
 	Parametry:
 	//Wymagane
@@ -157,7 +255,7 @@ webApp.get("/martyna/api/channels", (req,res)=>{
 	channel_id
 	title - max 256 znaków
 	content - max 2048 znaków
-	data - ilość ms lub zapis daty JavaScript
+	date - ilość ms lub zapis daty JavaScript
 	author - nazwa autora
 	author_icon - link to ikony autora
 	link - link do postu 
@@ -180,17 +278,19 @@ webApp.post("/martyna/api/news", (req, res)=>{
 	let guild_id = req.body.guild_id;
 	let channel_id = req.body.channel_id;
 	let title = req.body.title;
-	let data = req.body.data; //ms
+	let date = req.body.date; //ms
 	let author = req.body.author;
 	let author_icon = req.body.author_icon;
 	let link = req.body.link;
 	let content = req.body.content;
-	if(!(guild_id&&channel_id&&title&&data&&author&&author_icon&&link&&content)){
-		res.write("guild_id, channel_id, title, data, author, author_icon, link, content. Some of thete are missing");
+	if(!(guild_id&&channel_id&&title&&date&&author&&author_icon&&link&&content)){
 		res.status(400);
+		res.write("guild_id, channel_id, title, date, author, author_icon, link, content. Some of thete are missing");
 		res.send();
 		return;
 	}
+	if(!isNaN(date)) date = parseInt(date);
+
 	//optional
 	let image = req.body.image;
 	let color = req.body.color;
@@ -203,6 +303,7 @@ webApp.post("/martyna/api/news", (req, res)=>{
 	if(color==undefined) color = "0";
 	if(customFooter==undefined) customFooter = footerMessage;
 	if(customFooterImg==undefined) customFooterImg = footerImg;
+	
 
 	let embed = new Discord.RichEmbed()
 		.setTitle(title)
@@ -213,7 +314,7 @@ webApp.post("/martyna/api/news", (req, res)=>{
 	if(image) embed.setImage(image);
 	if(thumbnail) embed.setThumbnail(thumbnail);
 	embed
-		.setTimestamp(new Date(data))
+		.setTimestamp(new Date(date))
 		.setURL(link);
 	if(customFields){
 		customFields.forEach((field)=>{
@@ -231,10 +332,12 @@ webApp.post("/martyna/api/news", (req, res)=>{
 		})
 		.catch((m)=>{
 			console.log("Error with sennding");
-			res.write(""+m);
 			res.status(409);
+			res.write(""+m);
 			res.send();
 		});
+		
+	addNews(guild_id, title, link, date);
 });
 
 webApp.get("/martyna/api/teapot", (req, res)=>{ res.sendStatus(418);})
@@ -245,6 +348,8 @@ webApp.get("/martyna/api/teapot", (req, res)=>{ res.sendStatus(418);})
 
 discordClient.on('ready', ()=>{
 	console.log('Logged in as '+discordClient.user.tag);
+	humanPrefixes.push(discordClient.user.tag);
+	humanPrefixes.push("<@"+discordClient.user.id+">");
 	webApp.listen(8001, ()=>{
 		console.log("HTTP server start on 8001");
 	});
