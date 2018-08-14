@@ -57,13 +57,13 @@ Parametry:
 Zwraca listę nowinek
 
 Jeżeli podano guild_id struktura wygląda tak:
-```json
+```
 [
 	{title, date, link}, ...
 ]
 ```
 Jeżeli nie podano guild_id struktura wygląda tak:
-```json
+```
 {
 	guild_id: [
 		{title, date, link}, ...
