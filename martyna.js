@@ -97,6 +97,15 @@ function proccesHumanCommand(message){
 		discordClient.commands["nowosci"].run(discordClient,message);
 		return;
 	}
+	cmd = (
+		(text.indexOf("ktora")!==-1 || text.indexOf("jaka")!==-1 || text.indexOf("ktory")!==-1 || text.indexOf("jaki")!==-1 || text.indexOf("podaj")!==-1) 
+		&&
+		(text.indexOf("godzina")!==-1 || text.indexOf("czas")!==-1 || text.indexOf("dzisiaj")!==-1 || text.indexOf("godzine")!==-1)
+	);
+	if(cmd){
+		discordClient.commands["czas"].run(discordClient,message);
+		return;
+	}
 }
 
 discordClient.on('message', (message)=>{
